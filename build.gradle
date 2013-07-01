@@ -117,7 +117,7 @@ subprojects {
     }
 
     repositories {
-        //mavenLocal()
+        mavenLocal()
 
         maven {
             name 'MOTECH Maven Repository'
