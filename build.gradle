@@ -1,0 +1,255 @@
+configure(subprojects) { project ->
+    apply plugin: 'java'
+    apply plugin: 'osgi'
+    apply plugin: 'pmd'
+    apply plugin: 'checkstyle'
+    apply plugin: 'maven'
+
+    pmd {
+        ruleSetFiles = files("${rootDir}/pmd.xml")
+        targetJdk = 1.7
+        // avoid running for tests
+    }
+
+    checkstyle {
+        configFile = file("${rootDir}/checkstyle.xml")
+        showViolations = true
+    }
+
+    task dep << {
+        Dependencies.WriteDependencies(configurations.compile, "compile")
+    }
+
+//    task showMeCache << {
+//        configurations.compile.each { println it }
+//    }
+
+    test.enabled = false //!project.hasProperty('tests.skip')
+    pmdMain.enabled = false //!project.hasProperty('pmd.skip')
+    checkstyleMain.enabled = false //!project.hasProperty('checkstyle.skip')
+    pmdTest.enabled = false
+    checkstyleTest.enabled = false
+}
+
+allprojects {
+    group = 'org.motechproject'
+    version = '0.21.0.SNAPSHOT'
+}
+
+project(':motech-message-campaign') {
+    project.ext {
+        display_name = 'Message Campaign'
+        description = 'Message Campaign'
+        import_package = "net.sf.cglib.core," +
+                "net.sf.cglib.proxy," +
+                "net.sf.cglib.reflect," +
+                "org.ektorp.impl," +
+                "org.ektorp.spring," +
+                "org.aopalliance.aop," +
+                "org.apache.commons.fileupload," +
+                "org.springframework.aop," +
+                "org.springframework.aop.framework," +
+                "org.springframework.context.config," +
+                "org.springframework.security.config," +
+                "org.springframework.web.multipart.commons," +
+                "org.motechproject.commons.couchdb.service," +
+                "org.motechproject.event," +
+                "org.motechproject.event.listener.annotations," +
+                "org.motechproject.security.annotations," +
+                "org.motechproject.security.service," +
+                "org.motechproject.server.config," +
+                "org.motechproject.server.config.service," +
+                "org.motechproject.osgi.web,"+
+                "org.quartz.simpl," +
+                "*"
+        export_package = "org.motechproject.messagecampaign;version=${version}," +
+                "org.motechproject.messagecampaign.contract;version=${version}," +
+                "org.motechproject.messagecampaign.service;version=${version}," +
+                "org.motechproject.messagecampaign.domain.campaign;version=${version}," +
+                "org.motechproject.messagecampaign.userspecified;version=${version}"
+    }
+}
+
+project(':motech-pillreminder') {
+    project.ext {
+        display_name = 'MOTECH Pill Reminder'
+        description = 'MOTECH Pill Reminder to remind for Pills'
+        import_package = "org.motechproject.commons.couchdb.service," +
+            "org.motechproject.event.listener," +
+            "org.motechproject.server.config," +
+            "org.motechproject.server.config.service," +
+            "org.motechproject.osgi.web," +
+            "*"
+        export_package = "org.motechproject.server.pillreminder.api;version=${version}," +
+                "org.motechproject.server.pillreminder.api.contract;version=${version}," +
+                "org.motechproject.server.pillreminder.api.service;version=${version}"
+    }
+}
+
+project(':motech-scheduletracking') {
+    project.ext {
+        display_name = 'Schedule Tracking'
+        description = 'Schedule Tracking'
+        import_package = "org.motechproject.commons.couchdb.service," +
+                "org.motechproject.event.listener.annotations," +
+                "org.motechproject.server.config," +
+                "*"
+        export_package = "org.motechproject.scheduletracking.api.service;version=${version}," +
+                "org.motechproject.scheduletracking.api.service.impl;version=${version}," +
+                "org.motechproject.scheduletracking.api.events;version=${version}," +
+                "org.motechproject.scheduletracking.api.events.constants;version=${version}," +
+                "org.motechproject.scheduletracking.api.domain;version=${version}"
+    }
+}
+
+subprojects {
+
+    configure(jar.manifest) {
+        name project.ext.get('display_name')
+        instruction 'Export-Package', project.ext.get("export_package")
+        instruction 'Import-Package', project.ext.get("import_package")
+        instruction 'Built-By', System.properties['user.name']
+        instruction 'Created-By', 'Gradle OSGI Plugin'
+        instruction 'Bundle-Vendor', 'Grameen Foundation'
+        instruction 'Bundle-License', 'tbd'
+        instruction 'Bundle-DocURL', 'http://grameenfoundation.org/'
+        instruction 'Bundle-Description', project.ext.get('description')
+    }
+
+    repositories {
+        //mavenLocal()
+
+        maven {
+            name 'MOTECH Maven Repository'
+            url 'http://nexus.motechproject.org/content/repositories/public'
+        }
+
+        maven {
+            name 'SpringSource Enterprise Bundle Repository - SpringSource Bundle Releases'
+            url 'http://repository.springsource.com/maven/bundles/release'
+        }
+
+        mavenCentral()
+    }
+
+    compileJava {
+        sourceCompatibility = 1.7
+        targetCompatibility = 1.7
+    }
+
+    compileTestJava {
+        sourceCompatibility = 1.7
+        targetCompatibility = 1.7
+    }
+
+    ext.props = [
+        external_dependency_release_tag: 'r017'
+    ]
+
+    ext.lib = [
+        json: dependencies.create(group: 'org.json', name: 'org.motechproject.org.json', version: "20080701-${props.external_dependency_release_tag}"),
+        jackson: dependencies.create(group: 'org.codehaus.jackson', name: 'org.motechproject.org.codehaus.jackson', version: "1.9.7-${props.external_dependency_release_tag}"),
+        javax_servlet: dependencies.create(group: 'javax.servlet', name: 'com.springsource.javax.servlet', version: '250'),
+
+        //Commons
+        commons_lang: dependencies.create(group: 'org.apache.commons', name: 'com.springsource.org.apache.commons.lang', version: '2.6.0'),
+        commons_io: dependencies.create(group: 'org.apache.commons', name: 'com.springsource.org.apache.commons.io', version: '1.4.0'),
+        commons_fileupload: dependencies.create(group: 'org.apache.commons', name: 'com.springsource.org.apache.commons.fileupload', version: '1.2.1'),
+
+        //Spring
+        spring_core: dependencies.create(group: 'org.springframework', name: 'org.springframework.core', version: '3.1.0.RELEASE'),
+        spring_beans: dependencies.create(group: 'org.springframework', name: 'org.springframework.beans', version: '3.1.0.RELEASE'),
+        spring_context: dependencies.create(group: 'org.springframework', name: 'org.springframework.context', version: '3.1.0.RELEASE') {
+            exclude group: 'org.apache.commons', module: 'com.springsource.org.apache.commons.logging'
+        },
+        spring_context_support: dependencies.create(group: 'org.springframework', name: 'org.springframework.context.support', version: '3.1.0.RELEASE'),
+        spring_expression: dependencies.create(group: 'org.springframework', name: 'org.springframework.expression', version: '3.1.0.RELEASE'),
+        spring_aop: dependencies.create(group: 'org.springframework', name: 'org.springframework.aspects', version: '3.1.0.RELEASE'),
+        spring_asm: dependencies.create(group: 'org.springframework', name: 'org.springframework.asm', version: '3.1.0.RELEASE'),
+        spring_servlet: dependencies.create(group: 'org.springframework', name: 'org.springframework.web.servlet', version: '3.1.0.RELEASE') {
+            exclude group: 'org.apache.commons', module: 'com.springsource.org.apache.commons.logging'
+        },
+
+        //Logging
+        slf4j_api: dependencies.create(group: 'org.slf4j', name: 'com.springsource.slf4j.api', version: '1.6.1'),
+        slf4j_log4j: dependencies.create(group: 'org.slf4j', name: 'com.springsource.slf4j.log4j', version: '1.6.1'),
+        commons_logging: dependencies.create(group: 'org.slf4j', name: 'com.springsource.slf4j.org.apache.commons.logging', version: '1.6.1'),
+        log4j: dependencies.create(group: 'org.apache.log4j', name: 'com.springsource.org.apache.log4j', version: '1.2.16'),
+
+        //OSGi
+        osgi_core: dependencies.create(group: 'org.osgi', name: 'org.osgi.core', version: '4.2.0'),
+        osgi_compendium: dependencies.create(group: 'org.osgi', name: 'org.osgi.compendium', version: '4.2.0'),
+        blueprint_core: dependencies.create(group: 'org.eclipse.gemini', name: 'org.eclipse.gemini.blueprint.core', version: '1.0.2.RELEASE') {
+            exclude group: 'org.eclipse.osgi', module: 'org.eclipse.osgi'
+        },
+        blueprint_extender: dependencies.create(group: 'org.eclipse.gemini', name: 'org.eclipse.gemini.blueprint.extender', version: '1.0.2.RELEASE') {
+            exclude group: 'org.springframework', module: 'org.springframework.aop'
+            exclude group: 'org.springframework', module: 'org.springframework.beans'
+            exclude group: 'org.springframework', module: 'org.springframework.context'
+            exclude group: 'org.springframework', module: 'org.springframework.core'
+            exclude group: 'org.springframework', module: 'org.springframework.context.support'
+            exclude group: 'org.eclipse.osgi', module: 'org.eclipse.osgi'
+            exclude group: 'org.eclipse.osgi', module: 'org.eclipse.osgi.services'
+        },
+        felix_http_bridge: dependencies.create(group: 'org.apache.felix', name: 'org.apache.felix.http.bridge', version: '2.2.0'),
+        gson: dependencies.create(group: 'com.google.code.gson', name: 'org.motechproject.com.google.code.gson', version: "1.7.1-${props.external_dependency_release_tag}"),
+        joda_time: dependencies.create(group: 'joda-time', name: 'joda-time', version: '2.0'),
+
+        // Test
+        spring_test: dependencies.create(group: 'org.springframework', name: 'org.springframework.test', version: '3.1.0.RELEASE'),
+        junit: dependencies.create(group: 'org.junit', name: 'org.motechproject.org.junit', version: '4.9-r017'),
+        felix_http_jetty: dependencies.create(group: 'org.apache.felix', name: 'org.apache.felix.http.jetty', version: '2.0.4'),
+        osgi_it: dependencies.create(group: 'org.motechproject', name: 'org.motechproject.osgi.it', version: '1.0.2.RELEASE-r014') {
+            exclude group: 'org.slf4j', module: 'slf4j-api'
+            exclude group: 'org.slf4j', module: 'jcl-over-slf4j'
+            exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        },
+        mockito: dependencies.create(group: 'org.mockito', name: 'com.springsource.org.mockito', version: '1.8.4'),
+        hamcrest: dependencies.create(group: 'org.hamcrest', name: 'com.springsource.org.hamcrest', version: '1.1.0'),
+        hamcrest_core: dependencies.create(group: 'org.hamcrest', name: 'com.springsource.org.hamcrest.core', version: '1.1.0'),
+        hamcrest_all: dependencies.create(group: 'org.hamcrest', name: 'hamcrest-all', version: '1.1')
+    ]
+
+    test {
+        exclude '**/**/*BundleIT.*'
+        exclude '**/**/*FT.*'
+
+        //debug = true
+    }
+
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.6'
+}
+
+//import org.gradle.api.artifacts.result.ResolutionResult;
+//import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency;
+//import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableModuleResult;
+//import org.gradle.api.artifacts.Configuration;
+//
+//class Dependencies {
+//    static WriteIdentifier(ModuleVersionIdentifier id, String dep_type) {
+//        new File("dependencies.list").append(id.group + ":" + id.name + ":jar:" + id.version + ":" + dep_type + "\n")
+//    }
+//
+//    static void WriteChildren(RenderableDependency node, Set<ModuleVersionIdentifier> visited, String dep_type) {
+//        def children = node.getChildren()
+//        for (RenderableDependency child : children) {
+//            if (visited.add(child.getId())) {
+//                WriteIdentifier(child.getId(), dep_type)
+//                WriteChildren(child, visited, dep_type)
+//            }
+//        }
+//    }
+//
+//    static void WriteDependencies(Configuration configuration, String dep_type) {
+//        ResolutionResult result = configuration.getIncoming().getResolutionResult()
+//        RenderableDependency root = new RenderableModuleResult(result.getRoot())
+//        def visited = new HashSet<ModuleVersionIdentifier>()
+//
+//        WriteChildren(root, visited, dep_type)
+//
+//    }
+//
+//}

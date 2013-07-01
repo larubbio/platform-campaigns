@@ -35,6 +35,7 @@ import static junit.framework.Assert.assertTrue;
 @ContextConfiguration(locations = "classpath:testMessageCampaignApplicationContext.xml")
 public class AllMessageCampaignsIT {
 
+    public static final String MALNUTRITION = "Malnutrition";
     @Autowired
     private AllMessageCampaigns allMessageCampaigns;
 
@@ -122,9 +123,9 @@ public class AllMessageCampaignsIT {
 
     @Test
     public void shouldAddAndUpdateRecords() {
-        CampaignRecord campaign = createCampaignRecord();
-        CampaignRecord campaign2 = createCampaignRecord();
-        CampaignRecord campaign3 = createCampaignRecord();
+        CampaignRecord campaign = createCampaignRecord("PREGNANCY");
+        CampaignRecord campaign2 = createCampaignRecord("PREGNANCY");
+        CampaignRecord campaign3 = createCampaignRecord("PREGNANCY");
         campaign3.setName("OTHER NAME");
 
         // add first
@@ -147,7 +148,7 @@ public class AllMessageCampaignsIT {
 
     @Test
     public void shouldDeleteCampaignRecords() {
-        CampaignRecord campaign = createCampaignRecord();
+        CampaignRecord campaign = createCampaignRecord("Malnutrition");
 
         allMessageCampaigns.saveOrUpdate(campaign);
 
@@ -160,16 +161,15 @@ public class AllMessageCampaignsIT {
 
     @Test
     public void shouldFindCampaignsByName() {
-        CampaignRecord campaign = createCampaignRecord();
-        CampaignRecord campaign2 = createCampaignRecord();
-        campaign2.setName("Different Name");
+        CampaignRecord campaign = createCampaignRecord("PREGNANCY_TEST");
+        CampaignRecord campaign2 = createCampaignRecord("Malnutrition");
 
         allMessageCampaigns.saveOrUpdate(campaign);
         allMessageCampaigns.saveOrUpdate(campaign2);
 
-        assertEquals(asList(campaign), allMessageCampaigns.findByName("PREGNANCY"));
-        assertEquals(campaign, allMessageCampaigns.findFirstByName("PREGNANCY"));
-        assertEquals(asList(campaign2), allMessageCampaigns.findByName("Different Name"));
+        assertEquals(asList(campaign), allMessageCampaigns.findByName("PREGNANCY_TEST"));
+        assertEquals(campaign, allMessageCampaigns.findFirstByName("PREGNANCY_TEST"));
+        assertEquals(asList(campaign2), allMessageCampaigns.findByName("Malnutrition"));
     }
 
     private void assertMessageWithAbsoluteSchedule(AbsoluteCampaignMessage message, String name, String[] formats, Object messageKey, LocalDate date) {
@@ -199,17 +199,17 @@ public class AllMessageCampaignsIT {
     }
 
     private void loadCampaigns() {
-        List<CampaignRecord> records = campaignJsonLoader.loadCampaigns("message-campaigns.json");
+        List<CampaignRecord> records = campaignJsonLoader.loadCampaigns("message-campaigns_testdata.json");
         for (CampaignRecord record : records) {
             allMessageCampaigns.add(record);
         }
     }
 
-    private CampaignRecord createCampaignRecord() {
+    private CampaignRecord createCampaignRecord(String campaignName) {
         CampaignRecord campaign = new CampaignRecord();
         campaign.setCampaignType(CampaignType.ABSOLUTE);
         campaign.setMaxDuration("10");
-        campaign.setName("PREGNANCY");
+        campaign.setName(campaignName);
 
         CampaignMessageRecord message = new CampaignMessageRecord();
         message.setDate(LocalDate.now());

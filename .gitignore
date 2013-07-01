@@ -5,9 +5,12 @@
 .project
 .settings/
 target/
+gradle/
+build/
 .externalToolBuilders/
 maven-eclipse.xml
 .idea/
+.gradle/
 *.iml
 *.ipr
 *.iws
