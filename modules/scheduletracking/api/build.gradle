@@ -29,7 +29,7 @@ dependencies {
             lib.gson,
             lib.json,
             lib.commons_io,
-            lib.hamcrest_core,
+//            lib.hamcrest_core,
             lib.jackson,
             lib.commons_fileupload,
             lib.joda_time

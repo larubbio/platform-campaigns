@@ -25,7 +25,7 @@ dependencies {
             lib.gson,
             lib.json,
             lib.commons_io,
-            lib.hamcrest_core,
+//            lib.hamcrest_core,
             lib.jackson,
             lib.commons_fileupload,
             lib.joda_time
@@ -47,6 +47,7 @@ dependencies {
             lib.felix_http_jetty,
             lib.osgi_it,
             lib.mockito,
-            lib.hamcrest_all
+            lib.hamcrest_all,
+
     )
 }

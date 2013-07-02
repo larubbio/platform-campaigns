@@ -18,13 +18,34 @@ configure(subprojects) { project ->
 
     task dep << {
         Dependencies.WriteDependencies(configurations.compile, "compile")
+        Dependencies.WriteDependencies(configurations.testCompile, "test")
     }
 
 //    task showMeCache << {
 //        configurations.compile.each { println it }
 //    }
 
-    test.enabled = false //!project.hasProperty('tests.skip')
+    configurations.testCompile {
+        exclude (group: 'org.hamcrest', module: 'hamcrest-core')
+    }
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'org.junit' && details.requested.name == 'org.motechproject.org.junit')   {
+                    details.useVersion '4.9-r017'
+                }
+
+                if (details.requested.group == 'org.aspectj' && details.requested.name == 'com.springsource.org.aspectj.runtime') {
+                    details.useVersion '1.6.8.RELEASE'
+                }
+                if( details.requested.group == 'org.eclipse.osgi' && details.requested.name == 'org.eclipse.osgi'){
+                    details.useVersion '3.6.0.v20100517'
+                }
+            }
+        }
+    }
+
+    test.enabled = true //!project.hasProperty('tests.skip')
     pmdMain.enabled = false //!project.hasProperty('pmd.skip')
     checkstyleMain.enabled = false //!project.hasProperty('checkstyle.skip')
     pmdTest.enabled = false
@@ -203,15 +224,22 @@ subprojects {
             exclude group: 'org.slf4j', module: 'slf4j-api'
             exclude group: 'org.slf4j', module: 'jcl-over-slf4j'
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'junit', module: 'junit'
         },
         mockito: dependencies.create(group: 'org.mockito', name: 'com.springsource.org.mockito', version: '1.8.4'),
+        powermock_junit: dependencies.create(group: 'org.powermock', name: 'powermock-module-junit4', version: '1.4.9'),
+        powermock_mockito: dependencies.create(group: 'org.powermock', name: 'powermock-api-mockito', version: '1.4.9'),
         hamcrest: dependencies.create(group: 'org.hamcrest', name: 'com.springsource.org.hamcrest', version: '1.1.0'),
-        hamcrest_core: dependencies.create(group: 'org.hamcrest', name: 'com.springsource.org.hamcrest.core', version: '1.1.0'),
-        hamcrest_all: dependencies.create(group: 'org.hamcrest', name: 'hamcrest-all', version: '1.1')
+//        hamcrest_core: dependencies.create(group: 'org.hamcrest', name: 'com.springsource.org.hamcrest.core', version: '1.1.0'),
+        hamcrest_all: dependencies.create(group: 'org.hamcrest', name: 'hamcrest-all', version: '1.1'),
+//        osgi_extender_fragment : dependencies.create(group: 'org.motechproject', name: 'motech-platform-osgi-extender-fragment', version: "${allprojects.version}")
+        osgi_extender_fragment : dependencies.create(group: 'org.motechproject', name: 'motech-platform-osgi-extender-fragment', version: "0.21-SNAPSHOT"){
+            exclude group:'org.eclipse.osgi', module: 'org.eclipse.osgi'
+        }
     ]
 
     test {
-        exclude '**/**/*BundleIT.*'
+//        exclude '**/**/*BundleIT.*'
         exclude '**/**/*FT.*'
 
         //debug = true
@@ -223,33 +251,39 @@ task wrapper(type: Wrapper) {
     gradleVersion = '1.6'
 }
 
-//import org.gradle.api.artifacts.result.ResolutionResult;
-//import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency;
-//import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableModuleResult;
-//import org.gradle.api.artifacts.Configuration;
-//
-//class Dependencies {
-//    static WriteIdentifier(ModuleVersionIdentifier id, String dep_type) {
-//        new File("dependencies.list").append(id.group + ":" + id.name + ":jar:" + id.version + ":" + dep_type + "\n")
-//    }
-//
-//    static void WriteChildren(RenderableDependency node, Set<ModuleVersionIdentifier> visited, String dep_type) {
-//        def children = node.getChildren()
-//        for (RenderableDependency child : children) {
-//            if (visited.add(child.getId())) {
-//                WriteIdentifier(child.getId(), dep_type)
-//                WriteChildren(child, visited, dep_type)
-//            }
-//        }
-//    }
-//
-//    static void WriteDependencies(Configuration configuration, String dep_type) {
-//        ResolutionResult result = configuration.getIncoming().getResolutionResult()
-//        RenderableDependency root = new RenderableModuleResult(result.getRoot())
-//        def visited = new HashSet<ModuleVersionIdentifier>()
-//
-//        WriteChildren(root, visited, dep_type)
-//
-//    }
-//
-//}
+import org.gradle.api.artifacts.result.ResolutionResult;
+import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency;
+import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableModuleResult;
+import org.gradle.api.artifacts.Configuration;
+
+class Dependencies {
+    static deps = [:]
+
+    static WriteIdentifier(ModuleVersionIdentifier id, String dep_type) {
+        def depkey = id.group + ":" + id.name + ":jar:" + id.version;
+        if (!deps[depkey]) {
+            new File("dependencies.list").append(depkey + ":" + dep_type + "\n")
+            deps[depkey] = true
+        }
+    }
+
+    static void WriteChildren(RenderableDependency node, Set<ModuleVersionIdentifier> visited, String dep_type) {
+        def children = node.getChildren()
+        for (RenderableDependency child : children) {
+            if (visited.add(child.getId())) {
+                WriteIdentifier(child.getId(), dep_type)
+                WriteChildren(child, visited, dep_type)
+            }
+        }
+    }
+
+    static void WriteDependencies(Configuration configuration, String dep_type) {
+        ResolutionResult result = configuration.getIncoming().getResolutionResult()
+        RenderableDependency root = new RenderableModuleResult(result.getRoot())
+        def visited = new HashSet<ModuleVersionIdentifier>()
+
+        WriteChildren(root, visited, dep_type)
+
+    }
+
+}

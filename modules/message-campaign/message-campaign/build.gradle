@@ -4,10 +4,20 @@ project.ext {
 }
 
 dependencies {
-    compile group: 'org.motechproject', name: 'motech-platform-server-config', version: '0.21-SNAPSHOT'
-    compile group: 'org.motechproject', name: 'motech-platform-web-security-bundle', version: '0.21-SNAPSHOT'
-    compile group: 'org.motechproject', name: 'motech-scheduler', version: '0.21-SNAPSHOT'
-    compile group: 'org.motechproject', name: 'motech-platform-osgi-web-util', version: '0.21-SNAPSHOT'
+    compile ('org.motechproject:motech-platform-server-config:0.21-SNAPSHOT') {
+        exclude group: 'org.junit', module: 'org.motechproject.org.junit'
+    }
+    compile ([group: 'org.motechproject', name: 'motech-platform-web-security-bundle', version: '0.21-SNAPSHOT']) {
+        exclude group: 'org.junit', module: 'org.motechproject.org.junit'
+    }
+    compile ([group: 'org.motechproject', name: 'motech-scheduler', version: '0.21-SNAPSHOT']){
+        exclude group: 'org.junit', module: 'org.motechproject.org.junit'
+        exclude group: 'org.hamcrest', module: 'hamcrest-all'
+    }
+
+    compile ([group: 'org.motechproject', name: 'motech-platform-osgi-web-util', version: '0.21-SNAPSHOT']) {
+        exclude group: 'org.junit', module: 'org.motechproject.org.junit'
+    }
 
     compile (
             lib.spring_core,
@@ -15,7 +25,7 @@ dependencies {
             lib.spring_context,
             lib.spring_context_support,
             lib.spring_expression,
-            lib.spring_aop,
+//            lib.spring_aop,
             lib.spring_asm,
             lib.spring_servlet,
             lib.slf4j_api,
@@ -26,11 +36,11 @@ dependencies {
             lib.osgi_compendium,
             lib.blueprint_core,
             lib.blueprint_extender,
-            lib.felix_http_bridge,
+//            lib.felix_http_bridge,
             lib.gson,
             lib.json,
             lib.commons_io,
-            lib.hamcrest_core,
+//            lib.hamcrest_core,
             lib.jackson,
             lib.commons_fileupload,
             lib.joda_time
@@ -41,6 +51,8 @@ dependencies {
         exclude group: 'quartz', module: 'quartz'
     }
 
+
+
     testCompile dependencies.create(group: 'org.springframework', name: 'spring-test-mvc', version: '1.0.0.M1')
 
     testCompile (
@@ -49,6 +61,9 @@ dependencies {
             lib.felix_http_jetty,
             lib.osgi_it,
             lib.mockito,
-            lib.hamcrest_all
+            lib.hamcrest_all,
+            lib.powermock_junit,
+            lib.powermock_mockito,
+            lib.osgi_extender_fragment
     )
 }
