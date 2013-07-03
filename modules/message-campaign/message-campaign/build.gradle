@@ -3,6 +3,8 @@ project.ext {
     description = 'Part of MOTECH Message Campaign'
 }
 
+
+
 dependencies {
     compile ('org.motechproject:motech-platform-server-config:0.21-SNAPSHOT') {
         exclude group: 'org.junit', module: 'org.motechproject.org.junit'
@@ -25,7 +27,6 @@ dependencies {
             lib.spring_context,
             lib.spring_context_support,
             lib.spring_expression,
-//            lib.spring_aop,
             lib.spring_asm,
             lib.spring_servlet,
             lib.slf4j_api,
@@ -36,11 +37,9 @@ dependencies {
             lib.osgi_compendium,
             lib.blueprint_core,
             lib.blueprint_extender,
-//            lib.felix_http_bridge,
             lib.gson,
             lib.json,
             lib.commons_io,
-//            lib.hamcrest_core,
             lib.jackson,
             lib.commons_fileupload,
             lib.joda_time
@@ -50,8 +49,6 @@ dependencies {
     testCompile dependencies.create(group: 'org.motechproject', name: 'motech-testing-utils', version: '0.21-SNAPSHOT') {
         exclude group: 'quartz', module: 'quartz'
     }
-
-
 
     testCompile dependencies.create(group: 'org.springframework', name: 'spring-test-mvc', version: '1.0.0.M1')
 

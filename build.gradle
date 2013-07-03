@@ -17,13 +17,14 @@ configure(subprojects) { project ->
     }
 
     task dep << {
+        (new File("${projectDir}/target/dependencies.list")).delete()
+        Dependencies.setTargetDir("${projectDir}/target/dependencies.list")
         Dependencies.WriteDependencies(configurations.compile, "compile")
         Dependencies.WriteDependencies(configurations.testCompile, "test")
     }
 
-//    task showMeCache << {
-//        configurations.compile.each { println it }
-//    }
+    sourceSets.test.output.resourcesDir = sourceSets.test.output.classesDir
+
 
     configurations.testCompile {
         exclude (group: 'org.hamcrest', module: 'hamcrest-core')
@@ -32,7 +33,7 @@ configure(subprojects) { project ->
         resolutionStrategy {
             eachDependency { DependencyResolveDetails details ->
                 if (details.requested.group == 'org.junit' && details.requested.name == 'org.motechproject.org.junit')   {
-                    details.useVersion '4.9-r017'
+                    details.useVersion "4.9-${props.external_dependency_release_tag}"
                 }
 
                 if (details.requested.group == 'org.aspectj' && details.requested.name == 'com.springsource.org.aspectj.runtime') {
@@ -41,9 +42,15 @@ configure(subprojects) { project ->
                 if( details.requested.group == 'org.eclipse.osgi' && details.requested.name == 'org.eclipse.osgi'){
                     details.useVersion '3.6.0.v20100517'
                 }
+                if (details.requested.group == 'com.google.code.gson' && details.requested.name == 'org.motechproject.com.google.code.gson') {
+                    details.useVersion "1.7.1-${props.external_dependency_release_tag}"
+                }
+
             }
         }
     }
+
+
 
     test.enabled = true //!project.hasProperty('tests.skip')
     pmdMain.enabled = false //!project.hasProperty('pmd.skip')
@@ -55,6 +62,20 @@ configure(subprojects) { project ->
 allprojects {
     group = 'org.motechproject'
     version = '0.21.0.SNAPSHOT'
+}
+
+subprojects {
+
+    task copyJarToTarget(type: Copy)
+
+    copyJarToTarget {
+        from jar.archivePath
+        into "${projectDir}/target"
+    }
+    copyJarToTarget.dependsOn jar
+
+    check.dependsOn dep
+    check.dependsOn copyJarToTarget
 }
 
 project(':motech-message-campaign') {
@@ -164,7 +185,7 @@ subprojects {
     }
 
     ext.props = [
-        external_dependency_release_tag: 'r017'
+        external_dependency_release_tag: 'r018'
     ]
 
     ext.lib = [
@@ -258,11 +279,17 @@ import org.gradle.api.artifacts.Configuration;
 
 class Dependencies {
     static deps = [:]
+    static String filename;
+
+    static setTargetDir(String filename)
+    {
+        this.filename = filename
+    }
 
     static WriteIdentifier(ModuleVersionIdentifier id, String dep_type) {
         def depkey = id.group + ":" + id.name + ":jar:" + id.version;
         if (!deps[depkey]) {
-            new File("dependencies.list").append(depkey + ":" + dep_type + "\n")
+            new File(filename).append(depkey + ":" + dep_type + "\n")
             deps[depkey] = true
         }
     }
