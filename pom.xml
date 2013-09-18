@@ -4,7 +4,7 @@
 
     <groupId>org.motechproject</groupId>
     <artifactId>platform-campaigns</artifactId>
-    <version>0.21</version>
+    <version>0.21.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>MOTECH Platform Campaigns</name>
 
@@ -1672,6 +1672,6 @@
         <connection>${scm.connection}</connection>
         <developerConnection>${scm.developerConnection}</developerConnection>
         <url>${scm.url}</url>
-        <tag>platform-campaigns-0.21</tag>
+        <tag>0.21.X</tag>
     </scm>
 </project>
